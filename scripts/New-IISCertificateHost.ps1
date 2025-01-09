@@ -49,12 +49,6 @@ if (-not (Get-Website -Name $siteName)) {
     Write-Host "Website for hosting certificate import already created" -ForegroundColor Green
 }
 
-if ((Get-Website -Name 'Default Web Site')) {
-    Get-Website -Name 'Default Web Site' | Remove-Website
-} else {
-    Write-Host "Default website already removed" -ForegroundColor Green
-}
-
 Write-Host "Restarting IIS to refresh bindings" -ForegroundColor Green
 $null = iisreset
 

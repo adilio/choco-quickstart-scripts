@@ -199,6 +199,15 @@ function CopyToClipboard(id)
         <td>Chocolatey Central Management Service Salt</td>
         <td><a href="#" class="strip-decoration" onclick="CopyToClipboard('ccmservice');return false;"><div id="ccmservice" class="pw blurry-text">{{ ccm_service_salt | e }}</div></a></td>
     </tr>
+    <tr>
+        <td>Nexus Repository Source Username</td>
+        <td><a href="#" class="strip-decoration" onclick="CopyToClipboard('nexususername');return false;"><div id="nexususername" class="pw blurry-text">{{ nexus_client_username | e }}</div></a></td>
+    </tr>
+    <tr>
+        <td>Nexus Repository Source Password</td>
+        <td><a href="#" class="strip-decoration" onclick="CopyToClipboard('nexuspassword');return false;"><div id="nexuspassword" class="pw blurry-text">{{ nexus_client_password | e }}</div></a></td>
+    </tr>
+
 </table>
 <blockquote>
 <h3>📝 <strong>Note</strong></h3>

@@ -231,37 +231,13 @@ process {
 
     $ClientSaltValue = New-CCMSalt
     $ServiceSaltValue = New-CCMSalt
-    $ScriptBlock = @"
-`$ClientCommunicationSalt = '$ClientSaltValue'
-`$ServiceCommunicationSalt = '$ServiceSaltValue'
-`$FQDN = '$SubjectWithoutCN'
-`$NexusUserPW = '$NexusPw'
 
-# Touch NOTHING below this line
-`$User = 'chocouser'
-`$SecurePassword = `$NexusUserPW | ConvertTo-SecureString -AsPlainText -Force
-`$RepositoryUrl = "https://`$(`$fqdn):8443/repository/ChocolateyInternal/index.json"
-
-`$credential = [pscredential]::new(`$user, `$securePassword)
-
-`$downloader = [System.Net.WebClient]::new()
-`$downloader.Credentials = `$credential
-
-`$script =  `$downloader.DownloadString("https://`$(`$FQDN):8443/repository/choco-install/ClientSetup.ps1")
-
-`$params = @{
-    Credential      = `$Credential
-    ClientSalt      = `$ClientCommunicationSalt
-    ServiceSalt      = `$ServiceCommunicationSalt
-    InternetEnabled = `$true
-    RepositoryUrl   = `$RepositoryUrl
-}
-
-& ([scriptblock]::Create(`$script)) @params
-"@
-
-    $ScriptBlock | Set-Content -Path $EndpointScript
-
+    Invoke-TextReplacementInFile -Path $EndpointScript -Replacement @{
+        "{{ ClientSaltValue }}" = $ClientSaltValue
+        "{{ ServiceSaltValue }}"     = $ServiceSaltValue
+        "{{ FQDN }}" = $SubjectWithoutCn
+    }
+    
     # Agent Setup
     $agentArgs = @{
         CentralManagementServiceUrl = "https://$($SubjectWithoutCn):24020/ChocolateyManagementService"

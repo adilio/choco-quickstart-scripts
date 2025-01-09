@@ -2262,6 +2262,10 @@ The host name of the C4B instance.
             "{{ jenkins_fqdn .*?}}" = ([uri]$Data.JenkinsUri).DnsSafeHost
             "{{ jenkins_port .*?}}" = ([uri]$Data.JenkinsUri).Port
             "{{ jenkins_password .*?}}" = [System.Web.HttpUtility]::HtmlEncode($Data.JenkinsCredential.Password.ToPlainText())
+
+            # Nexus Chocolatey Source Credential values
+            "{{ nexus_client_username .*?}}" = 'chocouser'
+            "{{ nexus_client_password .*?}}" = $Data.ChocoUserPassword
         }
     }
 }
