@@ -63,6 +63,16 @@ param(
     # the local machine certificate stores.
     # Only used in Unattend mode for the SSL setup script.
     [Parameter(ParameterSetName='Unattended')]
+    [ArgumentCompleter({
+        Get-ChildItem Cert:\LocalMachine\TrustedPeople | ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new(
+                $_.Thumbprint,
+                $_.Thumbprint,
+                "ParameterValue",
+                ($_.Subject -replace "^CN=(?<FQDN>.+),?.*$",'${FQDN}')
+            )
+        }
+    })]
     [string]
     $Thumbprint,
 
@@ -150,16 +160,14 @@ try {
 
     # Kick off unattended running of remaining setup scripts.
     if ($Unattend) {
+        $Certificate = @{}
+        if ($Thumbprint) {$Certificate.Thumbprint = $Thumbprint}
+
         Set-Location "$env:SystemDrive\choco-setup\files"
         .\Start-C4BNexusSetup.ps1
-        .\Start-C4bCcmSetup.ps1 -DatabaseCredential $DatabaseCredential
+        .\Start-C4bCcmSetup.ps1 @Certificate -DatabaseCredential $DatabaseCredential
         .\Start-C4bJenkinsSetup.ps1
-        if ($Thumbprint) {
-            .\Set-SslSecurity.ps1 -Thumbprint $Thumbprint
-        }
-        else {
-            .\Set-SslSecurity.ps1
-        }
+        .\Set-SslSecurity.ps1 @Certificate
     }
 } finally {
     $ErrorActionPreference = $DefaultEap

@@ -22,12 +22,12 @@ param(
     # Ignored if supplied alongside -Subject.
     [Parameter(ValueFromPipeline, ParameterSetName='Thumbprint')]
     [ArgumentCompleter({
-        Get-ChildItem Cert:\LocalMachine\My | ForEach-Object {
+        Get-ChildItem Cert:\LocalMachine\TrustedPeople | ForEach-Object {
             [System.Management.Automation.CompletionResult]::new(
                 $_.Thumbprint,
                 $_.Thumbprint,
-                'ParameterValue',
-                $_.FriendlyName
+                "ParameterValue",
+                ($_.Subject -replace "^CN=(?<FQDN>.+),?.*$",'${FQDN}')
             )
         }
     })]
