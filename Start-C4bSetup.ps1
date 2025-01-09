@@ -63,6 +63,16 @@ param(
     # the local machine certificate stores.
     # Only used in Unattend mode for the SSL setup script.
     [Parameter(ParameterSetName='Unattended')]
+    [ArgumentCompleter({
+        Get-ChildItem Cert:\LocalMachine\TrustedPeople | ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new(
+                $_.Thumbprint,
+                $_.Thumbprint,
+                "ParameterValue",
+                ($_.Subject -replace "^CN=(?<FQDN>.+),?.*$",'${FQDN}')
+            )
+        }
+    })]
     [string]
     $Thumbprint,
 

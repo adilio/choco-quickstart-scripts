@@ -16,8 +16,19 @@ PS> .\Set-CCMCert.ps1 -CertificateThumbprint 'Your_Certificate_Thumbprint_Value'
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
+    [Alias("CertificateThumbprint")]
+    [ArgumentCompleter({
+        Get-ChildItem Cert:\LocalMachine\TrustedPeople | ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new(
+                $_.Thumbprint,
+                $_.Thumbprint,
+                "ParameterValue",
+                ($_.Subject -replace "^CN=(?<FQDN>.+),?.*$",'${FQDN}')
+            )
+        }
+    })]
     [String]
-    $CertificateThumbprint
+    $Thumbprint
 )
 
 begin {
@@ -41,14 +52,14 @@ process {
     #Add new CCM Web IIS Binding
         Write-Verbose "Adding new IIS binding to Chocolatey Central Management"
         $guid = [Guid]::NewGuid().ToString("B")
-        netsh http add sslcert ipport=0.0.0.0:443 certhash=$CertificateThumbprint certstorename=MY appid="$guid"
+        netsh http add sslcert ipport=0.0.0.0:443 certhash=$Thumbprint certstorename=MY appid="$guid"
         Get-WebBinding -Name ChocolateyCentralManagement | Remove-WebBinding
         New-WebBinding -Name ChocolateyCentralManagement -Protocol https -Port 443 -SslFlags 0 -IpAddress '*'        
 
     #Write Thumbprint to CCM Service appsettings.json
         $appSettingsJson = 'C:\ProgramData\chocolatey\lib\chocolatey-management-service\tools\service\appsettings.json'
         $json = Get-Content $appSettingsJson | ConvertFrom-Json
-        $json.CertificateThumbprint = $CertificateThumbprint
+        $json.CertificateThumbprint = $Thumbprint
         $json | ConvertTo-Json | Set-Content $appSettingsJson -Force
 
     #Try Restarting CCM Service

@@ -18,7 +18,18 @@ PS> .\Set-NexusCert.ps1 -Thumbprint 'Your_Certificate_Thumbprint_Value' -NexusPo
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [string]
+    [Alias("CertificateThumbprint")]
+    [ArgumentCompleter({
+        Get-ChildItem Cert:\LocalMachine\TrustedPeople | ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new(
+                $_.Thumbprint,
+                $_.Thumbprint,
+                "ParameterValue",
+                ($_.Subject -replace "^CN=(?<FQDN>.+),?.*$",'${FQDN}')
+            )
+        }
+    })]
+    [String]
     $Thumbprint,
 
     [Parameter()]

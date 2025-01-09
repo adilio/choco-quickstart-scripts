@@ -19,9 +19,19 @@ param(
 
     # Certificate to use for CCM service
     [Parameter()]
-    [Alias('Thumbprint')]
+    [Alias('CertificateThumbprint')]
+    [ArgumentCompleter({
+        Get-ChildItem Cert:\LocalMachine\TrustedPeople | ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new(
+                $_.Thumbprint,
+                $_.Thumbprint,
+                "ParameterValue",
+                ($_.Subject -replace "^CN=(?<FQDN>.+),?.*$",'${FQDN}')
+            )
+        }
+    })]
     [String]
-    $CertificateThumbprint
+    $Thumbprint
 )
 process {
     $DefaultEap = $ErrorActionPreference
@@ -123,19 +133,19 @@ process {
 
     Write-Host "Installing Chocolatey Central Management Service"
     $chocoArgs = @('install', 'chocolatey-management-service', "--source='ChocolateyInternal'", '-y', "--package-parameters-sensitive=`"/ConnectionString:'Server=Localhost\SQLEXPRESS;Database=ChocolateyManagement;User ID=$DatabaseUser;Password=$DatabaseUserPw;'`"", '--no-progress')
-    if ($CertificateThumbprint) {
+    if ($Thumbprint) {
         Write-Verbose "Validating certificate is in LocalMachine\TrustedPeople Store"
-        if (-not (Get-Item Cert:\LocalMachine\TrustedPeople\$CertificateThumbprint -EA 0) -and -not (Get-Item Cert:\LocalMachine\My\$CertificateThumbprint -EA 0)) {
-            Write-Warning "You specified $CertificateThumbprint for use with CCM service, but the certificate is not in the required LocalMachine\TrustedPeople store!"
-            Write-Warning "Please place certificate with thumbprint: $CertificateThumbprint in the LocalMachine\TrustedPeople store and re-run this step"
+        if (-not (Get-Item Cert:\LocalMachine\TrustedPeople\$Thumbprint -EA 0) -and -not (Get-Item Cert:\LocalMachine\My\$Thumbprint -EA 0)) {
+            Write-Warning "You specified $Thumbprint for use with CCM service, but the certificate is not in the required LocalMachine\TrustedPeople store!"
+            Write-Warning "Please place certificate with thumbprint: $Thumbprint in the LocalMachine\TrustedPeople store and re-run this step"
             throw "Certificate not in correct location... exiting."
-        } elseif ($MyCertificate = Get-Item Cert:\LocalMachine\My\$CertificateThumbprint -EA 0) {
+        } elseif ($MyCertificate = Get-Item Cert:\LocalMachine\My\$Thumbprint -EA 0) {
             Write-Verbose "Copying certificate from 'Personal' store to 'TrustedPeople'"
             Copy-CertToStore $MyCertificate
         } else {
             Write-Verbose "Certificate has been successfully found in correct store"
         }
-        $chocoArgs += @("--package-parameters='/CertificateThumbprint=$CertificateThumbprint'")
+        $chocoArgs += @("--package-parameters='/CertificateThumbprint=$Thumbprint'")
     }
     & Invoke-Choco @chocoArgs
 
